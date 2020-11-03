@@ -21,8 +21,9 @@ def readVideo():
 
     while ret:
         ret, frame = cap.read()
-        frameGrayScale = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        inputInGrayScale.append(frameGrayScale)
+        if ret:
+            frameGrayScale = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            inputInGrayScale.append(frameGrayScale)
 
     cap.release()
 
@@ -108,14 +109,14 @@ def main():
     end = time.time()
 
     fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    outputVideo = cv2.VideoWriter("exhaustive.mov", fourcc, 24, (J, I))
+    outputVideo = cv2.VideoWriter("exhaustive.mov", fourcc, 60, (J, I))
 
     for frame in outputFrames:
         outputVideo.write(frame)
 
     outputVideo.release()
 
-    print("Time taken by exhaustive search ", start - end, "sec")
+    print("Time taken by exhaustive search ", end - start, "sec")
 
 if __name__ == "__main__":
     main()
