@@ -7,13 +7,19 @@ M = 0
 N = 0
 I = 0
 J = 0
-p = 15
+p = 2
 prevRow = 0
 prevCol = 0
 inputInGrayScale = []
 outputFrames = []
 frameCount = 0
 search = 0
+timeExhaustive = 0
+time2DLog = 0
+avgSearchExhaustive = 0
+avgSearch2DLog = 0
+
+precision = 4
 
 def readVideo():
     global inputInGrayScale
@@ -28,10 +34,17 @@ def readVideo():
 
     cap.release()
 
-def writeVideo():
+def writeVideo(idx):
     global outputFrames, prevRow, prevCol
     fourcc = cv2.VideoWriter_fourcc(*"XVID")
-    outputVideo = cv2.VideoWriter("2D Logarithmic.mov", fourcc, 60, (J, I))
+    if idx == 0:
+        outputVideo = cv2.VideoWriter("exhaustive.mov", fourcc, 60, (J, I))
+    elif idx == 1:
+        outputVideo = cv2.VideoWriter("2D Logarithmic.mov", fourcc, 60, (J, I))
+    elif idx == 2:
+        outputVideo = cv2.VideoWriter("hierarchical.mov", fourcc, 60, (J, I))
+    else:
+        print("Error Index")
 
     for frame in outputFrames:
         outputVideo.write(frame)
@@ -41,7 +54,21 @@ def writeVideo():
     prevRow = 0
     prevCol = 0
 
-# work on per frame
+def writeComparison():
+    global time2DLog, timeExhaustive, avgSearch2DLog, avgSearchExhaustive
+
+    outputFile = open("comparison.txt", "a")
+    outputFile.write("\n")
+    outputFile.write(str(round(p, precision)))
+    outputFile.write("\t\t")
+    outputFile.write(str(round(timeExhaustive, precision)))
+    outputFile.write("\t\t")
+    outputFile.write(str(round(time2DLog, precision)))
+    outputFile.write("\t\t\t")
+    outputFile.write(str(round(avgSearchExhaustive, precision)))
+    outputFile.write("\t\t")
+    outputFile.write(str(round(avgSearch2DLog, precision)))
+
 def exhaustiveSearch(frame, ref):
     global M, N, I, J, p, outputFrames, prevRow, prevCol, search
 
@@ -121,17 +148,15 @@ def log2D(frame, ref):
                     rowIdx = i
                     colIdx = j
                     minDist = dist
-        print("jvj")
         prevRow = rowIdx
         prevCol = colIdx
     # not the first search, need to search neighbouring area
     else:
         pTemp = p
         while True:
-            print("hbdacn")
             k = math.ceil(math.log2(pTemp))
             d = 2 ** (k - 1)
-            print(k, d)
+            # print(k, d)
 
             if d < 1:
                 break
@@ -166,7 +191,8 @@ def log2D(frame, ref):
     outputFrames.append(frameRGB)
 
 def main():
-    global M, N, I, J, p, frameCount, inputInGrayScale, outputFrames, prevRow, prevCol, search
+    global M, N, I, J, p, frameCount, inputInGrayScale, outputFrames, prevRow, prevCol, search, precision
+    global timeExhaustive, time2DLog, avgSearchExhaustive, avgSearch2DLog
 
     # loading reference image in grayscale using 0
     ref = cv2.imread("reference.jpg", 0)
@@ -187,27 +213,28 @@ def main():
     print("shape of reference ", (M, N))
     print("total frames: ", frameCount)
 
-    # search = 0
-    # start = time.time()
-    # for i in range(frameCount):
-    #     exhaustiveSearch(inputInGrayScale[i], ref)
-    # end = time.time()
-    # writeVideo()
-    # avgSearchExhaustive = search/frameCount
-    # timeExhaustive = end - start
-    # print("Avg Search per frame for Exhaustive Search", avgSearchExhaustive)
-    # print("Time taken by Exhaustive Search ", timeExhaustive, "sec")
+    search = 0
+    start = time.time()
+    for i in range(frameCount):
+        exhaustiveSearch(inputInGrayScale[i], ref)
+    end = time.time()
+    writeVideo(0)
+    avgSearchExhaustive = search / frameCount
+    timeExhaustive = end - start
+    print("Avg Search per frame for Exhaustive Search", avgSearchExhaustive)
+    print("Time taken by Exhaustive Search ", timeExhaustive, "sec")
 
     search = 0
     start = time.time()
     for i in range(frameCount):
         log2D(inputInGrayScale[i], ref)
     end = time.time()
-    writeVideo()
-    avgSearch2DLog = search / frameCount
+    writeVideo(1)
+    avgSearch2DLog = search / (frameCount - 1.0)
     time2DLog = end - start
-    print("Avg Search per frame for Exhaustive Search", avgSearch2DLog)
-    print("Time taken by Exhaustive Search ", time2DLog, "sec")
+    print("Avg Search per frame for 2D Logarithmic Search", avgSearch2DLog)
+    print("Time taken by 2D Logarithmic Search ", time2DLog, "sec")
 
+    writeComparison()
 if __name__ == "__main__":
     main()
