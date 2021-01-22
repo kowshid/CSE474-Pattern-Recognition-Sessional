@@ -1,0 +1,4 @@
+Basic Perceptron Algorithm
+
+Correctly classified: 400
+Accuracy: 100.0

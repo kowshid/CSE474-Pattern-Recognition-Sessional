@@ -1,0 +1,2 @@
+p			time						search per frame
+	exhaustive	2DLogarithmic		exhaustive		2DLogarithmic
